@@ -1,0 +1,218 @@
+<!doctype html>
+
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chúc mừng sinh nhật</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#f7f9fc;
+      --accent:#0ea5a4;
+      --muted:#6b7280;
+      --success:#10b981;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;color:#111827}/* Layout */
+.wrap{display:flex;gap:28px;align-items:center}
+
+/* Main card with input */
+.card{width:320px;min-height:260px;background:linear-gradient(180deg,#ffffff, #fbfdff);border-radius:20px;box-shadow:0 6px 18px rgba(2,6,23,0.06);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:28px;border:1px solid rgba(15,23,42,0.04)}
+.title{font-weight:700;font-size:18px;margin-bottom:10px}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:18px;text-align:center}
+
+.pwd-shape{width:220px;height:56px;border-radius:12px;border:2px dashed rgba(15,23,42,0.06);display:flex;align-items:center;justify-content:center;background:#fff}
+.pwd-shape input{width:84%;border:0;outline:none;font-size:20px;text-align:center;background:transparent}
+
+.hint{font-size:12px;color:var(--muted);margin-top:12px}
+
+/* Keypad */
+.pad{display:grid;grid-template-columns:repeat(3,64px);grid-auto-rows:64px;gap:12px;padding:12px;border-radius:16px}
+.key{width:64px;height:64px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;box-shadow:0 4px 10px rgba(2,6,23,0.06);cursor:pointer;border:1px solid rgba(2,6,23,0.04);user-select:none}
+.key:active{transform:translateY(1px);}
+
+.key.action{background:linear-gradient(180deg,#0ea5a4,#059e98);color:white}
+.key.danger{background:linear-gradient(180deg,#f97316,#ef5a12);color:white}
+
+/* container for pad to the right */
+.pad-wrap{display:flex;align-items:center}
+
+/* Responsive */
+@media (max-width:720px){
+  .wrap{flex-direction:column}
+}
+
+/* Overlay when success */
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:90}
+.overlay.show{display:flex}
+.modal{background:white;padding:28px;border-radius:16px;min-width:320px;text-align:center;box-shadow:0 12px 40px rgba(2,6,23,0.2)}
+.modal h1{margin:0 0 8px 0;color:var(--accent)}
+.modal p{margin:0 0 12px 0;color:var(--muted)}
+
+/* simple confetti pieces */
+.confetti{position:fixed;pointer-events:none;z-index:100}
+.confetti-piece{position:absolute;width:10px;height:14px;border-radius:2px;opacity:0.95}
+
+/* error animation */
+.shake{animation:shake 360ms ease-in-out}
+@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}100%{transform:translateX(0)}}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="card">
+      <div class="title">Thu Nay Duoc Tao Ra Boi Kiet</div>
+      <div class="subtitle">Nhap Ngay Sinh di con cho</div><div class="pwd-shape" id="pwdShape">
+    <input id="pwd" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="••••" readonly />
+  </div>
+  <div class="hint">Mật khẩu gồm các chữ số. (gợi ý: 4 chữ số)</div>
+</div>
+
+<div class="pad-wrap">
+  <div class="pad" id="pad">
+    <!-- numbers 1-9 -->
+    <div class="key">1</div>
+    <div class="key">2</div>
+    <div class="key">3</div>
+    <div class="key">4</div>
+    <div class="key">5</div>
+    <div class="key">6</div>
+    <div class="key">7</div>
+    <div class="key">8</div>
+    <div class="key">9</div>
+    <!-- delete and enter placed as last row items but we have 3 columns; put delete in col1, 0 centered, enter col3 -->
+    <div class="key danger" id="del">Del</div>
+    <div class="key">0</div>
+    <div class="key action" id="enter">Enter</div>
+  </div>
+</div>
+
+  </div>  <!-- Overlay success -->  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h1>hep pi bot day</h1>
+      <p>Chúc em Thiên sinh nhật vv
+      
+      Chúc em Kiên sinh nhật vv</p>
+      <button id="closeBtn" style="margin-top:12px;padding:8px 14px;border-radius:8px;border:0;background:var(--accent);color:white;cursor:pointer">Đóng</button>
+    </div>
+  </div>  <div class="confetti" id="confetti"></div>  <script>
+    (function(){
+      const PASSWORD = '1710';
+      const input = document.getElementById('pwd');
+      const pad = document.getElementById('pad');
+      const del = document.getElementById('del');
+      const enter = document.getElementById('enter');
+      const overlay = document.getElementById('overlay');
+      const card = document.getElementById('card');
+      const confettiRoot = document.getElementById('confetti');
+      const closeBtn = document.getElementById('closeBtn');
+
+      // handle clicks on number keys
+      pad.addEventListener('click', function(e){
+        const t = e.target;
+        if(!t.classList.contains('key')) return;
+        if(t.id === 'del') return;
+        if(t.id === 'enter') return;
+        // number key
+        const val = t.textContent.trim();
+        if(input.value.length >= 10) return;
+        input.value = input.value + val;
+      });
+
+      del.addEventListener('click', function(){
+        input.value = input.value.slice(0,-1);
+        // small feedback
+        card.classList.add('shake');
+        setTimeout(()=>card.classList.remove('shake'),360);
+      });
+
+      // allow tapping the 0 key (middle bottom)
+      // handled by pad click
+
+      enter.addEventListener('click', function(){
+        checkPassword();
+      });
+
+      // allow pressing number keys on physical keyboard (optional)
+      document.addEventListener('keydown', function(e){
+        if(e.key >= '0' && e.key <= '9'){
+          if(input.value.length < 10) input.value += e.key;
+          e.preventDefault();
+        } else if(e.key === 'Backspace'){
+          input.value = input.value.slice(0,-1);
+          e.preventDefault();
+        } else if(e.key === 'Enter'){
+          checkPassword();
+          e.preventDefault();
+        }
+      });
+
+      function checkPassword(){
+        if(input.value === PASSWORD){
+          showSuccess();
+        } else {
+          // error feedback
+          card.classList.add('shake');
+          input.value = '';
+          setTimeout(()=>card.classList.remove('shake'),360);
+        }
+      }
+
+      function showSuccess(){
+        overlay.classList.add('show');
+        launchConfetti();
+      }
+
+      closeBtn.addEventListener('click', function(){
+        overlay.classList.remove('show');
+        confettiRoot.innerHTML = '';
+      });
+
+      // simple confetti generator
+      function launchConfetti(){
+        const colors = ['#ef4444','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#8b5cf6'];
+        const pieces = 40;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        confettiRoot.innerHTML = '';
+        for(let i=0;i<pieces;i++){
+          const el = document.createElement('div');
+          el.className = 'confetti-piece';
+          const size = Math.floor(Math.random()*12)+8;
+          el.style.width = size+'px';
+          el.style.height = (size+4)+'px';
+          el.style.background = colors[Math.floor(Math.random()*colors.length)];
+          el.style.left = Math.random()*w + 'px';
+          el.style.top = (-Math.random()*100 - 20) + 'px';
+          el.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
+          confettiRoot.appendChild(el);
+
+          // animate using CSS transitions
+          (function(a){
+            const duration = 2000 + Math.random()*2000;
+            a.style.transition = 'transform '+duration+'ms linear, top '+duration+'ms linear, left '+duration+'ms linear, opacity 1200ms linear';
+            // delay to let element paint
+            requestAnimationFrame(()=>{
+              a.style.top = (h + Math.random()*200) + 'px';
+              a.style.left = (Math.random()*w) + 'px';
+              a.style.transform = 'rotate(' + (Math.random()*720-360) + 'deg)';
+              a.style.opacity = '0.95';
+            });
+            // remove after
+            setTimeout(()=>{ try{ a.remove(); }catch(e){} }, duration+1200);
+          })(el);
+        }
+      }
+
+      // optional: make input focusable when tapped
+      document.getElementById('pwdShape').addEventListener('click', ()=>{
+        // nothing — input is readonly to force using pad. But give visual feedback
+        card.classList.add('shake');
+        setTimeout(()=>card.classList.remove('shake'),200);
+      });
+
+    })();
+  </script></body>
+</html>
